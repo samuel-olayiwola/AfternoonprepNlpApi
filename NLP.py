@@ -1,8 +1,7 @@
-from lib2to3.pgen2 import token
+
 from logging import exception
 from operator import indexOf
-from traceback import print_tb
-from types import TracebackType
+
 import openai
 import time
 import os
@@ -100,41 +99,44 @@ def getQuestion(subject,year,examType):
 
 class question(BaseModel):
     question : str
+
+class tags(BaseModel):
+    tags : list[str]
 #getQuestion("Biology","2004","JAMB")
 
 
 
-def questionFromText(text):
-  try:
-    
-    
-    completion = openai.Completion.create(
-    engine="gpt-j-6b",
-    prompt=''' [Context]: NLP Cloud was founded in 2021 when the team realized there was no easy way to reliably leverage Natural Language Processing in production.
-    [Question]: When was NLP Cloud founded? A)2019 B)2020 C)2021 D)2022
-    [Answer] :C) 2021
-    ###
-    [Context]: All plans can be stopped anytime. You only pay for the time you used the service. In case of a downgrade, you will get a discount on your next invoice.
-    [question]: When can plans be stopped? A) Anytime B) Never C)Monthly D) Weekly
-    [answer] : A) Anytime
-    ###
-    [Context]:'''+text + ":",
-    max_tokens=100,
-    presence_penalty = 1.5,
-    temperature = 0.1,
-    top_k =90,
-    stream=True
-    )
-    output = ""
-    for c in completion:
+# def questionFromText(text):
+#   try:
+#     doc = text.split(" ")
+#     completion = openai.Completion.create(
+#     engine="gpt-j-6b",
+#     prompt=''' [Context]: NLP Cloud was founded in 2021 when the team realized there was no easy way to reliably leverage Natural Language Processing in production.
+#     [Question]: When was NLP Cloud founded? A)2019 B)2020 C)2021 D)2022
+#     [Answer] :C) 2021
+#     ###
+#     [Context]: All plans can be stopped anytime. You only pay for the time you used the service. In case of a downgrade, you will get a discount on your next invoice.
+#     [question]: When can plans be stopped? A) Anytime B) Never C)Monthly D) Weekly
+#     [answer] : A) Anytime
+#     ###
+#     [Context]:'''+ text  ":",
+#     max_tokens=100,
+#     presence_penalty = 1.5,
+#     temperature = 0.1,
+#     top_k =90,
+#     stream=True,
+#     documents = doc
+#     )
+#     output = ""
+#     for c in completion:
       
-      output += c.choices[0].text
+#       output += c.choices[0].text
     
-    print(output.strip().split("###")[0])
+#     print(output.strip().split("###")[0])
     
 
-  except Exception as e:
-    print(e)
+#   except Exception as e:
+#     print(e)
 
 # questionFromText(''' Biology is the science that studies life. What exactly is life? This may sound like a silly question with an obvious answer, but it is not easy to define life. For example, a branch of biology called virology studies viruses, which exhibit some of the characteristics of living entities but lack others. It turns out that although viruses can attack living organisms, cause diseases, and even reproduce, they do not meet the criteria that biologists use to define life.From its earliest beginnings, biology has wrestled with four questions: What are the shared properties that make something “alive”? How do those various living things function? When faced with the remarkable diversity of life, how do we organize the different kinds of organisms so that we can better understand them? And, finally—what biologists ultimately seek to understand—how did this diversity arise and how is it continuing? As new organisms are discovered every day, biologists continue to seek answers to these and other questions.Properties of LifeAll groups of living organisms share several key characteristics or functions: order, sensitivity or response to stimuli, reproduction, adaptation, growth and development, regulation/homeostasis, and energy processing. When viewed together, these eight characteristics serve to define life.OrderOrganisms are highly organized structures that consist of one or more cells. Even very simple, single-celled organisms are remarkably complex. Inside each cell, atoms make up molecules. These in turn make up cell components or organelles.Multicellular organisms, which may consist of millions of individual cells, have an advantage over single-celled organisms in that their cells can be specialized to perform specific functions, and even sacrificed in certain situations for the good of the organism as a whole. How these specialized cells come together to form organs such as the heart, lung, or skin in organisms like the toad shown in Figure 1.2 will be discussed later.''')
 
@@ -153,7 +155,7 @@ def tagsToQuestions(tags):
     [question]: The organelle responsible for osmoregulation in Paramecium is A.  flame cell B.  nephridia C.  contractile vacuole D.  Malpighian tubule
     [answer] : C) contractile vacuole
     ###
-    # '''+tagStrng + ":",
+     '''+tagStrng + ":",
     max_tokens=100,
     presence_penalty = 1.5,
     temperature = 0.5,
@@ -164,10 +166,13 @@ def tagsToQuestions(tags):
     for c in completion:
       
       output += c.choices[0].text
-    
-    print(output.strip().split("###")[0])
+    retVal = {}
+    output = output.strip().split("###")[0].replace("[question]:","").replace("[answer] :","").strip().splitlines()
+    retVal["text"] = output[0].strip()
+    retVal["correctOption"] = output[1].strip()
+    print(output)
     print(tagStrng)
-
+    return retVal
   except Exception as e:
     print(e)
 
